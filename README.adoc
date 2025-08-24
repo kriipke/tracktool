@@ -1,0 +1,143 @@
+# A-VCS v0.1.2
+
+## 1. Add formal front-matter
+
+* Include **title, version, authors, date, and status** at the very top (e.g., `:revnumber: v0.1.0`, `:revdate: 2025-08-24`, `:revremark: Draft`).
+* Add a **Status of This Document** section explaining if it’s a draft, stable, or under community review.
+
+## 2. Normalize section structure
+
+Right now, some sections are descriptive (Overview, Workflow), some are normative (Regex, Conventions). Consider splitting into:
+
+* *Normative* (rules that MUST be followed):
+
+  * Vocabulary & Tokens
+  * Naming Grammar
+  * Folder Layout
+  * Workflow
+  * Regex
+* *Informative* (guidance/examples):
+
+  * Overview
+  * Examples
+  * Conventions & Guardrails
+  * Minimal Automation
+  * Git & Backups
+  * Team Handoff
+
+This makes it clearer which parts define the *standard* and which parts are *implementation guidance*.
+
+## 3. Clarify DAW neutrality
+
+In *Overview*, tighten wording:
+
+* Replace Ableton-specific `als` with “*DAW project file* (e.g., `.als`, `.logicx`, `.flp`)”.
+* Emphasize that the spec is **DAW-agnostic**.
+
+## 4. Strengthen Vocabulary & Tokens
+
+* Use a table instead of definition lists for better readability:
+
+\[cols="1,3"]
+|===
+\| Token | Definition
+
+\| TRACK | Constant, all caps, words separated by `_`. Regex: `[A-Z0-9_]+`
+\| T1 | Save time token in 12h clock + `A|P` (AM/PM). Ex: `1200A`, `0942P`
+\| T2 | Secondary time token (stem bounce time)
+\| STEM | Uppercase identifier for track stem (e.g., `BASS`, `VOCALS`)
+\| IDX | Mastering index (`1..n`) or literal `FINAL`
+\| EXT | File extension (`.als`, `.wav`, `.mp3`)
+|===
+
+## 5. Make Naming Grammar explicit
+
+* Use ABNF or EBNF grammar (common in specifications):
+
+## \[source,abnf]
+
+write-file   = TRACK "-" T1 "." ("als" / "wav" / "mp3")
+stem-file    = TRACK "-" T1 "-" T2 "-" STEM ".wav"
+unmastered   = TRACK "-" T1 "-" T2 "-\[unmastered].wav"
+master       = TRACK "-" T1 "-" T2 "-" (1\*DIGIT / "FINAL") ".wav"
+------------------------------------------------------------------
+
+This is more formal than just examples.
+
+## 6. Add file naming rationale
+
+Explain *why*:
+
+* Time tokens instead of semantic version numbers → matches human workflow.
+* `FINAL` as immutable → ensures clarity in delivery.
+* Uppercase tokens → cross-platform safety.
+
+## 7. Improve Examples
+
+* Show **full lifecycle of one track** in a single block:
+
+  * Initial `.als` save
+  * First bounce
+  * Stems
+  * Unmastered
+  * Master attempts
+  * Final master
+
+This makes it crystal-clear how files evolve.
+
+## 8. Folder Layout refinements
+
+* Present as a **tree with mandatory/optional markers**:
+
+```
+PROJECTS/<TRACK>/
+├── ableton/        (MUST)
+├── stems/          (OPTIONAL if no post-processing)
+├── post/           (OPTIONAL)
+├── mixes/          (MUST if post)
+├── masters/        (MUST if mastering)
+├── manifests/      (RECOMMENDED)
+└── symlinks/       (RECOMMENDED)
+```
+
+## 9. Workflow as state diagram
+
+* Instead of a list, show a diagram (plantuml, mermaid, or ascii-art).
+* Example:
+
+```
+[DAW Save] --> [Bounce] --> [Stems] --> [Unmastered] --> [Masters] --> [FINAL]
+```
+
+## 10. Regex formatting
+
+* Wrap each regex in fenced code blocks (`source,regex`) for copy-paste clarity.
+* State whether they are POSIX, PCRE, or PCRE2.
+
+## 11. Manifests schema
+
+* Define manifest as a **formal JSON Schema** or YAML Schema.
+* Show required vs optional fields (bpm, key, notes).
+* Define one consistent casing (camelCase or snake\_case).
+
+## 12. Conventions section
+
+* Make it explicit: use **RFC 2119 keywords** (“MUST”, “SHOULD”, “MAY”) for rules.
+
+  * Example: “Filenames MUST contain only `[A-Z0-9_]` characters.”
+* This transforms the doc from a guide into a **standard**.
+
+## 13. Automation
+
+* Move shell helpers into an *Appendix* to avoid breaking flow of the standard.
+* Add warnings like “Implementation-specific, not normative.”
+
+## 14. Versioning
+
+* Include `:revnumber:` and bump this doc like semver itself (e.g., v0.1.0 → v0.2.0).
+* Suggest a changelog section at the bottom:
+
+```
+== Changelog
+* v0.1.0 — Initial draft
+```
