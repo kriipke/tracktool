@@ -1,13 +1,13 @@
-\= Audio Version Control (A-VCS) — Spec v1.0
-\:toc:
-\:toclevels: 3
-\:icons: font
-\:sectanchors:
-\:sectnums:
+= Audio Version Control (A-VCS) — Spec v1.0
+:toc:
+:toclevels: 3
+:icons: font
+:sectanchors:
+:sectnums:
 
 A clean, producer-friendly “audio VCS” from *writing → post → mastering*. It keeps the exact naming logic, makes edge-cases explicit, and adds just enough structure (folders, manifests, symlinks) so collaborators and future-you can glance and know what’s what.
 
-\== 1) Vocabulary & Tokens
+== 1) Vocabulary & Tokens
 
 * *TRACK* — constant, all-caps, words separated by `_` only: `\[A-Z0-9_]+`
 * *T1* — 12-hour, zero-padded 4-digit time, plus `A|P` (AM/PM): `HHMM\[A|P]`
@@ -19,40 +19,40 @@ A clean, producer-friendly “audio VCS” from *writing → post → mastering*
 * *IDX* — mastering index: integer `1..n` or the literal `FINAL`
 * *EXT* — file extension: `.als`, `.wav`, `.mp3`
 
-\== 2) Naming Grammar (Formal)
+== 2) Naming Grammar (Formal)
 
 Write-phase snapshots (Ableton save + bounces):
-\[source,text]
---------------
 
+[source,text]
+----
 <TRACK>-<T1>.als
 <TRACK>-<T1>.wav
 <TRACK>-<T1>.mp3
 ----
 
 Post-production stems (Pro Tools, etc):
-\[source,text]
---------------
 
+[source,text]
+----
 <TRACK>-<T1>-<T2>-<STEM>.wav
 ----
 
 Unmastered stereo (render from post session using that stem set):
-\[source,text]
---------------
 
+[source,text]
+----
 <TRACK>-<T1>-<T2>-[unmastered].wav
 ----
 
 Master candidates (in-house):
-\[source,text]
---------------
 
+[source,text]
+----
 <TRACK>-<T1>-<T2>-<IDX>.wav         ; IDX = 1,2,3,...
 <TRACK>-<T1>-<T2>-FINAL.wav         ; duplicate of the chosen IDX
 ----
 
-\=== Regex (for validators/automation)
+=== Regex (for validators/automation)
 
 * Write ALS: `^([A-Z0-9_]+)-([0-1][0-9][0-5][0-9][AP])\.als$`
 * Write WAV/MP3: `^([A-Z0-9_]+)-([0-1][0-9][0-5][0-9][AP])\.(wav|mp3)$`
@@ -60,10 +60,10 @@ Master candidates (in-house):
 * Unmastered: `^([A-Z0-9_]+)-([0-1][0-9][0-5][0-9][AP])-([0-1][0-9][0-5][0-9][AP])-\[unmastered\]\.wav$`
 * Master: `^([A-Z0-9_]+)-([0-1][0-9][0-5][0-9][AP])-([0-1][0-9][0-5][0-9][AP])-(FINAL|[1-9][0-9]*)\.wav$`
 
-\== 3) Canonical Folder Layout
+== 3) Canonical Folder Layout
 
-## \[source,text]
-
+[source,text]
+----
 PROJECTS/
 └── <TRACK>/
 ├── ableton/                 # .als snapshots + primary bounces
@@ -93,12 +93,12 @@ PROJECTS/
 ├── LATEST\_STEMS -> ../stems/<T1>-<T2>/
 ├── LATEST\_UNMASTERED -> ../mixes/<TRACK>-<T1>-<T2>-\[unmastered].wav
 └── FINAL -> ../masters/<TRACK>-<T1>-<T2>-FINAL.wav
----------------------------------------------------
+----
 
-\[quote]
+[quote]
 Rationale: folders are chronological but also *semantic*. You can zip `masters/` for delivery without dragging along DAW sessions; stems and post live cleanly apart.
 
-\== 4) Workflow (State Machine)
+== 4) Workflow (State Machine)
 
 . *Write (Ableton)*
 .. On every meaningful save: save `.als` using `<TRACK>-<T1>.als`.
@@ -117,10 +117,10 @@ Rationale: folders are chronological but also *semantic*. You can zip `masters/`
 `masters/<TRACK>-<T1>-<T2>-1.wav`, then `…-2.wav`, etc.
 .. When one is chosen, duplicate to `…-FINAL.wav` and update `symlinks/FINAL`.
 
-\== 5) Examples
+== 5) Examples
 
-## \[source,text]
-
+[source,text]
+----
 ABLETON save + bounces:
 TRACK\_TITLE-1200A.als
 TRACK\_TITLE-1200A.wav
@@ -138,14 +138,14 @@ Mastering passes:
 TRACK\_TITLE-1200A-1230A-1.wav
 TRACK\_TITLE-1200A-1230A-2.wav
 TRACK\_TITLE-1200A-1230A-FINAL.wav    (if #2 chosen)
-----------------------------------------------------
+----
 
-\== 6) Manifests (Lightweight Metadata)
+== 6) Manifests (Lightweight Metadata)
 
 For every significant event (save, stem-bounce, mix, master), write a tiny JSON next to `manifests/`:
 
-## \[source,json]
-
+[source,json]
+----
 {
 "event": "ableton-save",
 "track": "TRACK\_TITLE",
@@ -160,12 +160,12 @@ For every significant event (save, stem-bounce, mix, master), write a tiny JSON 
 "notes": "tightened kick decay; vocal comp v2",
 "timestamp": "2025-08-23T23:42:19-04:00"
 }
--
+----
 
 Create similar entries for `stems-bounce`, `unmastered-print`, `master-candidate`, `master-final`.
 Hashes make remote delivery & backups verifiable.
 
-\== 7) Conventions & Guardrails
+== 7) Conventions & Guardrails
 
 * *Characters*: `\[A-Z0-9_]` only (safe across OS and S3/object storage).
 * *Sample rate/bit depth*: pick a project default (e.g., 48k/24-bit) and include in manifests for anything that deviates.
@@ -174,35 +174,35 @@ Hashes make remote delivery & backups verifiable.
 * *Stem vocab*: keep consistent. If routing changes, document in the manifest (`routing_map`).
 * *No overwrite*: all new outputs create new files. Symlinks provide the “latest”.
 
-\== 8) Minimal Automation (Ready-to-Use Snippets)
+== 8) Minimal Automation (Ready-to-Use Snippets)
 
 These optional helpers reflect the spec; drop them into `PROJECTS/<TRACK>/bin/`.
 
-\=== a) Convert the latest WAV to 320k MP3 (name-matched)
+=== a) Convert the latest WAV to 320k MP3 (name-matched)
 
-## \[source,bash]
-
-\#!/usr/bin/env bash
+[source,bash]
+----
+#!/usr/bin/env bash
 set -euo pipefail
 wav="\$1"  # e.g., ableton/TRACK\_TITLE-1200A.wav
 mp3="\${wav%.wav}.mp3"
 ffmpeg -y -i "\$wav" -codec\:a libmp3lame -b\:a 320k "\$mp3"
-------------------------------------------------------------
+----
 
-\=== b) Make/refresh symlinks
+=== b) Make/refresh symlinks
 
-## \[source,bash]
-
-\#!/usr/bin/env bash
+[source,bash]
+----
+#!/usr/bin/env bash
 set -euo pipefail
 ln -sfn "../ableton/\$(basename "\$1")" "symlinks/LATEST\_BOUNCE"
------------------------------------------------------------------
+----
 
-\=== c) Finalize a master (duplicate chosen IDX → FINAL)
+=== c) Finalize a master (duplicate chosen IDX → FINAL)
 
-## \[source,bash]
-
-\#!/usr/bin/env bash
+[source,bash]
+----
+#!/usr/bin/env bash
 set -euo pipefail
 cand="\$1"  # masters/TRACK\_TITLE-1200A-1255A-3.wav
 
@@ -211,46 +211,46 @@ cand="\$1"  # masters/TRACK\_TITLE-1200A-1255A-3.wav
 final="\${cand%-\[0-9]\*.wav}-FINAL.wav"
 cp -p "\$cand" "\$final"
 ln -sfn "../masters/\$(basename "\$final")" "symlinks/FINAL"
-------------------------------------------------------------
+----
 
-\=== d) Quick validators (bash + `grep -E`)
+=== d) Quick validators (bash + `grep -E`)
 
-## \[source,bash]
-
-is\_write()   { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP].(als|wav|mp3)\$'; }
-is\_stem()    { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-\[A-Z0-9\_]+.wav\$'; }
-is\_unmast()  { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-$unmastered$.wav\$'; }
-is\_master()  { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-(FINAL|\[1-9]\[0-9]\*).wav\$'; }
+[source,bash]
+----
+is_write()   { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP].(als|wav|mp3)\$'; }
+is_stem()    { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-\[A-Z0-9\_]+.wav\$'; }
+is_unmast()  { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-$unmastered$.wav\$'; }
+is_master()  { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-\[0-1]\[0-9]\[0-5]\[0-9]\[AP]-(FINAL|\[1-9]\[0-9]\*).wav\$'; }
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
-\=== e) Manifests (tiny helper)
+=== e) Manifests (tiny helper)
 
 * Add a post-render step that computes `sha256sum` and writes the JSON (schema above).
 * If you prefer YAML, mirror the same fields.
 
-\== 9) Git, Git LFS & Backups (Practical Guidance)
+== 9) Git, Git LFS & Backups (Practical Guidance)
 
 * *Git* for manifests, session files *metadata*, docs, scripts, and symlinks.
 * *Git LFS* for `.wav`, `.mp3`, `.als` if you want them in the repo; or keep audio in object storage (S3/GDrive) and store only manifests + checksums + paths.
 
-## \[source,gitconfig]
+[source,gitconfig]
 
 # .gitattributes
 
-\*.wav filter=lfs diff=lfs merge=lfs -text
-\*.mp3 filter=lfs diff=lfs merge=lfs -text
-\*.als filter=lfs diff=lfs merge=lfs -text
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.als filter=lfs diff=lfs merge=lfs -text
 ------------------------------------------
 
 * *Remote offsite*: `rsync`/`rclone` the project folder (or only `masters/` and `mixes/`). Manifests make integrity checks trivial (`sha256`).
 
-\== 10) Team Handoff & Delivery
+== 10) Team Handoff & Delivery
 
 * Send a single folder: `masters/` (all candidates + FINAL) and `mixes/` if needed.
 * Include `manifests/` and optionally `stems/<T1>-<T2>/` when a remix or alternate mastering is planned.
 * The `FINAL` symlink and `…-FINAL.wav` remove ambiguity about *the* chosen master.
 
-\== Optional Next Step
+== Optional Next Step
 
 If desired, a small CLI (`tracktool`) can:
 
