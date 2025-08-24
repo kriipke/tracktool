@@ -1,4 +1,4 @@
-= Audio Version Control (A-VCS) — Spec v1.0
+= Audio Version Control (A-VCS) — Spec v0.1.0
 :toc:
 :toclevels: 3
 :icons: font
@@ -7,19 +7,17 @@
 
 A clean, producer-friendly “audio VCS” from *writing → post → mastering*. It keeps the exact naming logic, makes edge-cases explicit, and adds just enough structure (folders, manifests, symlinks) so collaborators and future-you can glance and know what’s what.
 
-== 1) Vocabulary & Tokens
+== Vocabulary & Tokens
 
-* *TRACK* — constant, all-caps, words separated by `_` only: `\[A-Z0-9_]+`
-* *T1* — 12-hour, zero-padded 4-digit time, plus `A|P` (AM/PM): `HHMM\[A|P]`
-  \*\* Examples: `0007A`, `0942P`, `1200A`, `1200P`
-  \*\* Edge rules: 12:00–12:59 AM ⇒ `1200A…`; 12:00–12:59 PM ⇒ `1200P…`
-* *T2* — a second time token, same format, used for post-production stem bounces
-* *STEM* — controlled vocabulary (suggested): `BASS|DRUMS|KICK|SNARE|PERC|VOCALS|BGV|SYNTH|PIANO|GTR|FX|PAD|LEAD|SUB|ROOM|BUS_<NAME>`
-  \*\* Extend if needed but keep to `\[A-Z0-9_]+`.
-* *IDX* — mastering index: integer `1..n` or the literal `FINAL`
-* *EXT* — file extension: `.als`, `.wav`, `.mp3`
+TRACK:: constant, all-caps, words separated by `_` only: `[A-Z0-9_]+`
+T1:: 12-hour, zero-padded 4-digit time, plus `A|P` (AM/PM): `HHMM\[A|P]`
+Examples::: `0007A`, `0942P`, `1200A`, `1200P`
+T2:: a second time token, same format, used for post-production stem bounces
+STEM:: controlled vocabulary (suggested): `BASS|DRUMS|KICK|SNARE|PERC|VOCALS|BGV|SYNTH|PIANO|GTR|FX|PAD|LEAD|SUB|ROOM|BUS_<NAME>`. Extend if needed but keep to `\[A-Z0-9_]+`.
+IDX:: mastering index: integer `1..n` or the literal `FINAL`
+EXT:: file extension: `.als`, `.wav`, `.mp3`
 
-== 2) Naming Grammar (Formal)
+== Naming Grammar (Formal)
 
 Write-phase snapshots (Ableton save + bounces):
 
@@ -60,7 +58,7 @@ Master candidates (in-house):
 * Unmastered: `^([A-Z0-9_]+)-([0-1][0-9][0-5][0-9][AP])-([0-1][0-9][0-5][0-9][AP])-\[unmastered\]\.wav$`
 * Master: `^([A-Z0-9_]+)-([0-1][0-9][0-5][0-9][AP])-([0-1][0-9][0-5][0-9][AP])-(FINAL|[1-9][0-9]*)\.wav$`
 
-== 3) Canonical Folder Layout
+== Canonical Folder Layout
 
 [source,text]
 ----
@@ -98,7 +96,7 @@ PROJECTS/
 [quote]
 Rationale: folders are chronological but also *semantic*. You can zip `masters/` for delivery without dragging along DAW sessions; stems and post live cleanly apart.
 
-== 4) Workflow (State Machine)
+== Workflow (State Machine)
 
 . *Write (Ableton)*
 .. On every meaningful save: save `.als` using `<TRACK>-<T1>.als`.
@@ -117,7 +115,7 @@ Rationale: folders are chronological but also *semantic*. You can zip `masters/`
 `masters/<TRACK>-<T1>-<T2>-1.wav`, then `…-2.wav`, etc.
 .. When one is chosen, duplicate to `…-FINAL.wav` and update `symlinks/FINAL`.
 
-== 5) Examples
+== Examples
 
 [source,text]
 ----
@@ -140,7 +138,7 @@ TRACK\_TITLE-1200A-1230A-2.wav
 TRACK\_TITLE-1200A-1230A-FINAL.wav    (if #2 chosen)
 ----
 
-== 6) Manifests (Lightweight Metadata)
+== Manifests (Lightweight Metadata)
 
 For every significant event (save, stem-bounce, mix, master), write a tiny JSON next to `manifests/`:
 
@@ -165,7 +163,7 @@ For every significant event (save, stem-bounce, mix, master), write a tiny JSON 
 Create similar entries for `stems-bounce`, `unmastered-print`, `master-candidate`, `master-final`.
 Hashes make remote delivery & backups verifiable.
 
-== 7) Conventions & Guardrails
+== Conventions & Guardrails
 
 * *Characters*: `\[A-Z0-9_]` only (safe across OS and S3/object storage).
 * *Sample rate/bit depth*: pick a project default (e.g., 48k/24-bit) and include in manifests for anything that deviates.
@@ -174,7 +172,7 @@ Hashes make remote delivery & backups verifiable.
 * *Stem vocab*: keep consistent. If routing changes, document in the manifest (`routing_map`).
 * *No overwrite*: all new outputs create new files. Symlinks provide the “latest”.
 
-== 8) Minimal Automation (Ready-to-Use Snippets)
+== Minimal Automation (Ready-to-Use Snippets)
 
 These optional helpers reflect the spec; drop them into `PROJECTS/<TRACK>/bin/`.
 
@@ -228,7 +226,7 @@ is_master()  { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP
 * Add a post-render step that computes `sha256sum` and writes the JSON (schema above).
 * If you prefer YAML, mirror the same fields.
 
-== 9) Git, Git LFS & Backups (Practical Guidance)
+== Git, Git LFS & Backups (Practical Guidance)
 
 * *Git* for manifests, session files *metadata*, docs, scripts, and symlinks.
 * *Git LFS* for `.wav`, `.mp3`, `.als` if you want them in the repo; or keep audio in object storage (S3/GDrive) and store only manifests + checksums + paths.
@@ -244,7 +242,7 @@ is_master()  { echo "\$1" | grep -Eq '^\[A-Z0-9\_]+-\[0-1]\[0-9]\[0-5]\[0-9]\[AP
 
 * *Remote offsite*: `rsync`/`rclone` the project folder (or only `masters/` and `mixes/`). Manifests make integrity checks trivial (`sha256`).
 
-== 10) Team Handoff & Delivery
+== Team Handoff & Delivery
 
 * Send a single folder: `masters/` (all candidates + FINAL) and `mixes/` if needed.
 * Include `manifests/` and optionally `stems/<T1>-<T2>/` when a remix or alternate mastering is planned.
